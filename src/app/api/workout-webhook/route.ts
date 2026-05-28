@@ -10,22 +10,39 @@ export async function POST(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Not configured' }, { status: 500 })
 
   const body = await request.json()
-  const date = new Date().toISOString().split('T')[0]
 
-  const workouts = Array.isArray(body) ? body : body.workouts ?? [body]
+  // Health Auto Export format: body.data.workouts = [{name, start, end, duration, activeEnergyBurned, ...}]
+  const workouts: Array<Record<string, unknown>> = body?.data?.workouts ?? []
 
-  const inserts = workouts.map((w: Record<string, unknown>) => ({
-    user_id: userId,
-    date: (w.startDate as string)?.split('T')[0] ?? date,
-    workout_type: w.workoutActivityType ?? w.type ?? null,
-    duration_minutes: w.duration ?? null,
-    active_calories: w.activeEnergyBurned ?? w.calories ?? null,
-    distance_km: w.totalDistance ?? w.distanceKm ?? null,
-    avg_heart_rate: w.averageHeartRate ?? null,
-    max_heart_rate: w.maximumHeartRate ?? null,
-    source: 'health_auto_export',
-    raw_data: w,
-  }))
+  if (workouts.length === 0) {
+    return NextResponse.json({ ok: true, count: 0, message: 'No workouts in payload' })
+  }
+
+  const inserts = workouts.map(w => {
+    // start format: "2026-05-28 18:03:40 +0100" — grab just the date part
+    const startStr = (w.start as string) ?? ''
+    const date = startStr.split(' ')[0] ?? new Date().toISOString().split('T')[0]
+
+    // duration is in seconds
+    const durationMins = w.duration ? Math.round((w.duration as number) / 60) : null
+
+    // activeEnergyBurned is { qty, units } in kJ — convert to kcal
+    const energyObj = w.activeEnergyBurned as { qty: number; units: string } | null
+    const activeCalories = energyObj?.qty ? Math.round(energyObj.qty * 0.239) : null
+
+    return {
+      user_id: userId,
+      date,
+      workout_type: w.name ?? null,
+      duration_minutes: durationMins,
+      active_calories: activeCalories,
+      distance_km: null,
+      avg_heart_rate: null,
+      max_heart_rate: null,
+      source: 'health_auto_export',
+      raw_data: w,
+    }
+  })
 
   const { error } = await supabase.from('workouts').insert(inserts)
 

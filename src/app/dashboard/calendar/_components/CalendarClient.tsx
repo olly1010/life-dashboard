@@ -6,7 +6,7 @@ import { saveSixthformSlot, deleteSixthformSlot, addTask, deleteTask } from '../
 type SixthformSlot = { id: string; day_of_week: number; start_time: string; end_time: string; subject: string; type: string }
 type Task = { id: string; title: string; duration_minutes: number; category: string; priority: number; date: string | null; start_time: string | null; end_time: string | null; ai_scheduled: boolean }
 type SleepData = { duration_hours: number | null; quality: number | null } | null
-type StimulantData = { caffeine_mg: number; logged_time: string } | null
+type StimulantData = { caffeine_mg: number; logged_time: string }
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 const CAT_COLORS: Record<string, string> = {

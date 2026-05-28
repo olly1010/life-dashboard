@@ -8,7 +8,7 @@ type Task = { id: string; title: string; duration_minutes: number; category: str
 type SleepData = { duration_hours: number | null; quality: number | null } | null
 type StimulantData = { caffeine_mg: number; logged_time: string }
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const CAT_COLORS: Record<string, string> = {
   education: '#3b82f6', revision: '#6366f1', fitness: '#f97316',
   work: '#22c55e', personal: '#a855f7', rest: '#6b7280', sixthform: '#0ea5e9',
@@ -29,7 +29,7 @@ export default function CalendarClient({ sixthform, tasks, sleepData, todayStimu
   const [view, setView] = useState<'schedule' | 'timetable'>('schedule')
   const [selectedDay, setSelectedDay] = useState(() => {
     const d = new Date().getDay()
-    return d === 0 ? 1 : d === 6 ? 5 : d
+    return d === 0 ? 7 : d
   })
   const [showAddTask, setShowAddTask] = useState(false)
   const [showAddSlot, setShowAddSlot] = useState(false)
@@ -128,7 +128,7 @@ export default function CalendarClient({ sixthform, tasks, sleepData, todayStimu
       {view === 'schedule' && (
         <div className="flex gap-1.5 mb-5">
           {DAYS.map((day, i) => (
-            <button key={day} onClick={() => setSelectedDay(i + 1)} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${selectedDay === i + 1 ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'text-[#6b7280] bg-[#111111] border border-[#1f1f1f] hover:text-white'}`}>
+            <button key={day} onClick={() => setSelectedDay(i + 1)} className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors ${selectedDay === i + 1 ? 'bg-teal-500/20 text-teal-400 border border-teal-500/30' : 'text-[#6b7280] bg-[#111111] border border-[#1f1f1f] hover:text-white'}`}>
               {day.slice(0, 3)}
             </button>
           ))}

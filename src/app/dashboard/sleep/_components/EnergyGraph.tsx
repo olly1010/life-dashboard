@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-type Stimulant = { logged_time: string; caffeine_mg: number }
+type Stimulant = { logged_time: string; caffeine_mg: number; name: string }
 
 function circadian(hour: number): number {
   // Two-peak circadian model: morning peak ~10am, evening dip ~3pm, secondary peak ~7pm

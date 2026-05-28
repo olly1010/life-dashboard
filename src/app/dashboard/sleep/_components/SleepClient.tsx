@@ -89,7 +89,7 @@ export default function SleepClient({ sleepLogs, todayStimulants, allStimulants 
       </div>
 
       {/* Energy graph */}
-      <EnergyGraph stimulants={todayStimulants} sleepHours={lastSleep?.duration_hours ?? null} />
+      <EnergyGraph stimulants={todayStimulants} sleepHours={lastSleep?.duration_hours ?? null} wakeTime={lastSleep?.wake_time ?? null} />
 
       {/* Health scan */}
       {showHealthScan && (

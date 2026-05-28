@@ -4,13 +4,16 @@ import { useMemo } from 'react'
 
 type Stimulant = { logged_time: string; caffeine_mg: number; name: string }
 
-function circadian(hour: number): number {
-  // Two-peak circadian model: morning peak ~10am, evening dip ~3pm, secondary peak ~7pm
-  const morning = 40 * Math.exp(-Math.pow(hour - 10, 2) / 8)
-  const afternoon = -20 * Math.exp(-Math.pow(hour - 14.5, 2) / 4)
-  const evening = 20 * Math.exp(-Math.pow(hour - 19, 2) / 6)
-  const base = 30 + morning + afternoon + evening
-  return Math.max(10, Math.min(100, base))
+// Shift circadian peaks relative to wake time.
+// Biology: first peak ~3.5h after waking, dip ~7.5h after, evening peak ~12h after.
+function circadian(hour: number, wakeHour: number): number {
+  const peak1 = wakeHour + 3.5
+  const dip   = wakeHour + 7.5
+  const peak2 = wakeHour + 12
+  const morning   =  40 * Math.exp(-Math.pow(hour - peak1, 2) / 8)
+  const afternoon = -20 * Math.exp(-Math.pow(hour - dip,   2) / 4)
+  const evening   =  20 * Math.exp(-Math.pow(hour - peak2, 2) / 6)
+  return Math.max(10, Math.min(100, 30 + morning + afternoon + evening))
 }
 
 function caffeineEffect(hour: number, stimulants: Stimulant[]): number {
@@ -34,10 +37,16 @@ function sleepMultiplier(hours: number | null): number {
 export default function EnergyGraph({
   stimulants,
   sleepHours,
+  wakeTime,
 }: {
   stimulants: Stimulant[]
   sleepHours: number | null
+  wakeTime: string | null
 }) {
+  // Parse wake time into decimal hour, default 7am
+  const wakeHour = wakeTime
+    ? (() => { const [h, m] = wakeTime.split(':').map(Number); return h + m / 60 })()
+    : 7
   const START_HOUR = 6
   const END_HOUR = 24
   const STEPS = 120
@@ -49,12 +58,12 @@ export default function EnergyGraph({
   const points = useMemo(() => {
     return Array.from({ length: STEPS + 1 }, (_, i) => {
       const hour = START_HOUR + (i / STEPS) * (END_HOUR - START_HOUR)
-      const base = circadian(hour) * mult
+      const base = circadian(hour, wakeHour) * mult
       const caffeine = caffeineEffect(hour, stimulants)
       const energy = Math.min(100, Math.max(0, base + caffeine))
       return { hour, energy }
     })
-  }, [stimulants, mult])
+  }, [stimulants, mult, wakeHour])
 
   const now = new Date()
   const nowHour = now.getHours() + now.getMinutes() / 60
@@ -87,7 +96,9 @@ export default function EnergyGraph({
         <div>
           <h3 className="text-sm font-medium text-white">Energy forecast</h3>
           <p className="text-xs text-[#6b7280] mt-0.5">
-            {sleepHours ? `Based on ${sleepHours}h sleep` : 'No sleep logged'} · {stimulants.length} stimulant{stimulants.length !== 1 ? 's' : ''} today
+            {sleepHours ? `${sleepHours}h sleep` : 'No sleep logged'}
+            {wakeTime ? ` · wake ${wakeTime.slice(0, 5)}` : ' · default wake 7am'}
+            {' · '}{stimulants.length} stimulant{stimulants.length !== 1 ? 's' : ''} today
           </p>
         </div>
         {nowHour >= START_HOUR && nowHour <= END_HOUR && (
